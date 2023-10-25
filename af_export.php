@@ -81,67 +81,72 @@ function export_entries_page()
 		exit();
 	}
 
-	// get all entries and fields
-	$form_id = $_GET["form_id"];
-	$entries = af_get_entries( $form_id );
-	$fields = af_get_form_fields( $form_id );
-	$field_names = get_form_field_names( $fields );
+	// get form id
+	$form_id = isset( $_GET["form_id"] ) ? $_GET["form_id"] : "";
 
-	// create the table
-	$table = '';
-	if ( $entries )
+	if ( $form_id )
 	{
-		$table .= '<table cellspacing="1" cellpadding="5" border="1">';
+		// get all entries and fields
+		$entries = af_get_entries( $form_id );
+		$fields = af_get_form_fields( $form_id );
+		$field_names = get_form_field_names( $fields );
 
-		// create table header
-		$table .= '<tr><th>id</th><th>date</th>';
-		foreach ( $field_names as $name )
+		// create the table
+		$table = '';
+		if ( $entries )
 		{
-			$table .= '<th>' . $name . '</th>';
-		}
-		$table .= '</tr>';
+			$table .= '<table cellspacing="1" cellpadding="5" border="1">';
 
-		// create table content
-		foreach ( $entries as $entry )
-		{
-			$table .= '<tr>';
-			$table .= '<td>' . $entry->ID . '</td>';
-			$table .= '<td>' . $entry->post_date . '</td>';
-
-			$values = get_fields( $entry );
-			$values_array = get_field_values( $values );
-			foreach ( $values_array as $value )
+			// create table header
+			$table .= '<tr><th>id</th><th>date</th>';
+			foreach ( $field_names as $name )
 			{
-				$table .= '<td>' . $value . '</td>';
+				$table .= '<th>' . $name . '</th>';
 			}
-
 			$table .= '</tr>';
+
+			// create table content
+			foreach ( $entries as $entry )
+			{
+				$table .= '<tr>';
+				$table .= '<td>' . $entry->ID . '</td>';
+				$table .= '<td>' . $entry->post_date . '</td>';
+
+				$values = get_fields( $entry );
+				$values_array = get_field_values( $values );
+				foreach ( $values_array as $value )
+				{
+					$table .= '<td>' . $value . '</td>';
+				}
+
+				$table .= '</tr>';
+			}
+			$table .= '</table>';
 		}
-		$table .= '</table>';
-	}
 
-	// show the table
-	echo $table;
+		// show the table
+		echo $table;
 
-	// create the csv
-	$csv = html_to_csv( $table );
-	$folder = '../entry_export/';
-	$filename = $form_id . '-' .date('Y_m-d');
-	if ( ! is_dir( $folder ) )
-	{
-		mkdir( $folder, 0755, true );
+		// create the csv
+		$csv = html_to_csv( $table );
+		$folder = '../entry_export/';
+		$filename = $form_id . '-' .date('Y_m-d');
+		if ( ! is_dir( $folder ) )
+		{
+			mkdir( $folder, 0755, true );
+		}
+		$fp = fopen( $folder . $filename . '.csv', 'w' );
+		$rows = explode( "\n", $csv );
+		foreach ( $rows as $row )
+		{
+			$fields = str_getcsv( $row );
+			fputcsv( $fp, $fields );
+		}
+		fclose( $fp );
+		
+		// download link
+		echo '<a class="download-af-entries-button" href="' . get_site_url() . '/entry_export/' . $filename . '.csv">Download</a>';
 	}
-	$fp = fopen( $folder . $filename . '.csv', 'w' );
-	$rows = explode( "\n", $csv );
-	foreach ( $rows as $row )
-	{
-		$fields = str_getcsv( $row );
-		fputcsv( $fp, $fields );
-	}
-	fclose( $fp );
-	
-	// download link
-	echo '<a class="download-af-entries-button" href="' . get_site_url() . '/entry_export/' . $filename . '.csv">Download</a>';
 }
 
 function html_to_csv( $html )
