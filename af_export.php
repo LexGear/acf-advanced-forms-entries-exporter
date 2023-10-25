@@ -82,7 +82,6 @@ function export_entries_page()
 	}
 
 	// get all entries and fields
-	$form_id = 'form_6513a7dfba6b0';
 	$form_id = $_GET["form_id"];
 	$entries = af_get_entries( $form_id );
 	$fields = af_get_form_fields( $form_id );
